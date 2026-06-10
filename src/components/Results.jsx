@@ -88,11 +88,7 @@ export function Results({ data, imageUrl, loading }) {
 
         {/* Explanation / Content */}
         <section style={{ marginBottom: 48, fontSize: "1.1rem", color: "var(--text-main)", lineHeight: "1.8" }}>
-          {data.content ? (
-            <div dangerouslySetInnerHTML={{ __html: mdHtml(data.content) }} />
-          ) : (
-            <div dangerouslySetInnerHTML={{ __html: mdHtml(data.explanation || "") }} />
-          )}
+          <div dangerouslySetInnerHTML={{ __html: mdHtml(data.content) }} />
         </section>
 
         {/* Fascinating Facts */}

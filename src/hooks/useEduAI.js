@@ -45,15 +45,6 @@ CRITICAL: Write a concise, in-depth article using 3 subheadings (###) and bold k
 const cache = new Map();
 const imageCache = new Map();
 
-// Blacklist patterns for irrelevant Wikipedia images
-const IMAGE_BLACKLIST = [
-  "commons-logo", "edit-ltr", "wikiquote", "wiktionary", "wikisource",
-  "wikibooks", "wikiversity", "wikinews", "wikidata", "wikivoyage",
-  "folder_hexagonal", "symbol_", "question_book", "ambox", "padlock",
-  "semi-protection", "crystal_clear", "nuvola", "portal-puzzle",
-  "icon", "logo", "stub", "flag_of", "coat_of_arms"
-];
-
 export function useEduAI(apiKey) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -133,22 +124,10 @@ export function useEduAI(apiKey) {
         }
       }
       
-      // Fallback: just return the first available thumbnail if all were filtered
       return pages.find(p => p.thumbnail)?.thumbnail?.source || null;
     } catch (e) {
       console.warn("Wikipedia image fetch failed:", e);
     }
-    return null;
-  }
-
-  // Local pre-generated 3D assets for common topics
-  function getLocalAsset(topic) {
-    const ck = (topic || "").toLowerCase().trim();
-    if (ck.includes("water cycle")) return "/assets/water_cycle.png";
-    if (ck.includes("ohm's law") || ck.includes("ohms law")) return "/assets/ohms_law.png";
-    if (ck.includes("dna replication")) return "/assets/dna_replication.png";
-    if (ck.includes("food chain")) return "/assets/food_chain.png";
-    if (ck.includes("newton's first law") || ck.includes("newtons first law") || ck.includes("inertia")) return "/assets/newtons_first_law.png";
     return null;
   }
 
@@ -186,13 +165,8 @@ export function useEduAI(apiKey) {
       if (!imageUrl) {
         const actualTopic = eduData?.context?.topic || eduData?.topic;
         
-        // Priority 1: Local pre-generated 3D assets
-        imageUrl = getLocalAsset(actualTopic);
-
-        // Priority 2: High-resolution, crisp, logo-free SVG diagrams from Wikipedia Search
-        if (!imageUrl) {
-          imageUrl = await fetchWikipediaImage(actualTopic);
-        }
+        // Fetch high-resolution, crisp, logo-free SVG diagrams from Wikipedia Search
+        imageUrl = await fetchWikipediaImage(actualTopic);
 
         // Cache the successful image URL
         if (imageUrl) {
