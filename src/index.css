@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-base: #0B0E14;
+  --bg-card: #151A23;
+  --bg-hover: #1E2532;
+  --text-main: #E2E8F0;
+  --text-muted: #94A3B8;
+  --accent-primary: #6366F1;
+  --accent-primary-hover: #4F46E5;
+  --accent-success: #10B981;
+  --accent-warning: #F59E0B;
+  --accent-danger: #EF4444;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(99, 102, 241, 0.5);
+  --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  color: #F8FAFC;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(21, 26, 35, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.input-focus-ring:focus-within {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Base markdown styles */
+.prose {
+  color: var(--text-main);
+  font-size: 1.1rem;
+}
+.prose h2, .prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.prose ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.prose p {
+  margin-bottom: 1rem;
+}
+.prose strong {
+  color: #F8FAFC;
+  font-weight: 600;
+}
