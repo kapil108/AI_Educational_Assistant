@@ -76,11 +76,25 @@ export function Results({ data, imageUrl, loading }) {
         {/* Real Educational Image */}
         {imageUrl && (
           <section style={{ marginBottom: 48 }}>
-            <div className="glass" style={{ borderRadius: 16, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-card)" }}>
+            <div style={{ 
+              width: '100%', 
+              aspectRatio: '16/9', 
+              backgroundColor: '#ffffff', 
+              borderRadius: '12px', 
+              overflow: 'hidden', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center' 
+            }}>
               <img 
                 src={imageUrl} 
-                alt={data?.context?.topic || data.topic} 
-                style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#ffffff" }} 
+                alt="Educational visual" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain', 
+                  mixBlendMode: 'multiply' 
+                }} 
               />
             </div>
           </section>

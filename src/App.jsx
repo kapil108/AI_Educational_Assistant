@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useEduAI } from "./hooks/useEduAI";
 import { Settings } from "./components/Settings";
 import { Hero } from "./components/Hero";
@@ -12,6 +12,8 @@ export default function App() {
   
   const [data, setData] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
+  
+  const currentRequestRef = useRef(0);
 
   const { runQuery, loading, error, statusMsg, pipeState } = useEduAI(apiKey);
 
@@ -20,7 +22,14 @@ export default function App() {
     setData(null);
     setImageUrl(null);
     
+    const requestId = Date.now();
+    currentRequestRef.current = requestId;
+    
     const result = await runQuery(query);
+    
+    // Discard result if a newer request was made while this one was running
+    if (currentRequestRef.current !== requestId) return;
+    
     if (!result.error) {
       setData(result.eduData);
       setImageUrl(result.imageUrl);

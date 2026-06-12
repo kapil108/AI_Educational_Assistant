@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 const API_URL = "https://models.inference.ai.azure.com/chat/completions";
 const MODEL = "gpt-4o";
 
+// FINAL PROMPT: Smart Search Queries added, Wikipedia removed entirely
 const MASTER_PROMPT = `Role: Engaging educational storyteller. Your task is to explain the student's query in a crisp, highly interesting, and visually appealing article format. Reject non-academic queries by returning ONLY:
 {"error":"I am an Educational AI Assistant designed exclusively for Class 5–12, JEE, and NEET learning. Please ask an academic question."}
 
@@ -28,7 +29,7 @@ JSON Schema:
     "align": "NCERT/CBSE standards",
     "url": "https://www.google.com/search?q=site:vedantu.com+OR+site:ncert.nic.in+{topic}+class+{class}"
   },
-  "img_prompt": "Flat 2D vector textbook diagram of {topic}, line art style, white background, black labels, sharp outlines. Avoid: 3D, photo, fire, smoke, dark background, logos, watermarks.",
+  "image_search_query": "Provide a 3-5 word image search query. CRITICAL: Do NOT use generic terms like 'infographic', 'flowchart', 'template', or 'diagram'. Specify actual visual objects. Example for Probability: 'dice and coins math vector'. Example for Geometry: 'cartesian plane graph'. Example for Science: 'mitosis cell division vector'.",
   "practice_questions": {
     "easy": ["3 questions"],
     "medium": ["2 questions"],
@@ -39,8 +40,7 @@ JSON Schema:
   "revision_summary": "2-3 line summary"
 }
 
-Constraints: 'refs.url' MUST strictly embed the exact core topic and class, formatted with '+' for spaces. No empty fields. Strictly enforce array counts.
-CRITICAL: Write a concise, in-depth article using 3 subheadings (###) and bold keywords (**text**), strictly with NO bullet points. For math/science, ensure a clear academic diagram or schematic is used instead of generic photos.`;
+Constraints: 'refs.url' MUST strictly embed the exact core topic and class, formatted with '+' for spaces. No empty fields. Strictly enforce array counts.`;
 
 const cache = new Map();
 const imageCache = new Map();
@@ -55,7 +55,6 @@ export function useEduAI(apiKey) {
 
   async function callAPI(system, user, jsonMode = false, tokens = 4096) {
     if (!apiKey) throw new Error("API Key is required.");
-    const useURL = 'https://models.inference.ai.azure.com/chat/completions';
     
     const bodyObj = {
       model: MODEL,
@@ -66,8 +65,8 @@ export function useEduAI(apiKey) {
       ],
     };
     if (jsonMode) bodyObj.response_format = { type: "json_object" };
-
-    const r = await fetch(useURL, {
+    
+    const r = await fetch(API_URL, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json", 
@@ -99,49 +98,15 @@ export function useEduAI(apiKey) {
     }
   }
 
-  // Fetch the best educational image using Wikipedia's robust search engine
-  async function fetchWikipediaImage(searchQuery) {
-    try {
-      // Use Wikipedia's search to handle synonyms, plurals, and complex topics
-      // Requesting 1200px thumbs ensures crisp, high-resolution graphics (SVGs rendered as 1200px PNGs)
-      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchQuery)}&gsrlimit=3&prop=pageimages&pithumbsize=1200&format=json&origin=*`;
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      const pages = Object.values(data?.query?.pages || {});
-      if (!pages.length) return null;
-
-      // Find the first page that has a high-quality thumbnail, excluding portraits or icons if possible
-      for (const page of pages) {
-        if (page.thumbnail && page.thumbnail.source) {
-          const src = page.thumbnail.source.toLowerCase();
-          // STRICTLY forbid real-life photos (.jpg) to guarantee educational diagrams (.svg or .png)
-          if (!src.includes("portrait") && !src.includes("logo") && !src.includes("icon") && !src.includes(".jpg") && !src.includes(".jpeg")) {
-            if (src.includes(".svg") || src.includes(".png")) {
-              return page.thumbnail.source;
-            }
-          }
-        }
-      }
-      
-      return pages.find(p => p.thumbnail)?.thumbnail?.source || null;
-    } catch (e) {
-      console.warn("Wikipedia image fetch failed:", e);
-    }
-    return null;
-  }
-
   const runQuery = async (query) => {
     setLoading(true);
     setError(null);
     setStatusMsg("Starting...");
     setPipeState({});
     const sleep = ms => new Promise(r => setTimeout(r, ms));
-
     try {
       const ck = query.toLowerCase();
       let eduData;
-
       if (cache.has(ck)) {
         eduData = cache.get(ck);
         sp("api", "done"); sp("gen", "done");
@@ -157,18 +122,23 @@ export function useEduAI(apiKey) {
         sp("api", "done"); sp("gen", "done");
       }
 
-      // Fetch Real Image
+      // STRICT BING IMAGE SEARCH (Wikipedia removed entirely)
       sp("img", "active"); sp("res", "active");
       setStatusMsg("Finding high-quality educational image...");
-
       let imageUrl = imageCache.get(ck) || null;
+      
       if (!imageUrl) {
-        const actualTopic = eduData?.context?.topic || eduData?.topic;
+        const actualTopic = eduData?.context?.topic || eduData?.topic || ck;
         
-        // Fetch high-resolution, crisp, logo-free SVG diagrams from Wikipedia Search
-        imageUrl = await fetchWikipediaImage(actualTopic);
-
-        // Cache the successful image URL
+        // Use AI's smart query
+        const smartQuery = eduData?.image_search_query || `${actualTopic} textbook diagram vector`;
+        
+        // Explicitly blocking Indian ed-tech domains that spam watermarked/padded images
+        const bingQuery = encodeURIComponent(`${smartQuery} -logo -watermark -youtube -video -site:cuemath.com -site:byjus.com -site:vedantu.com -site:toppr.com -site:doubtnut.com -site:shutterstock.com`);
+        
+        // Fetch High-Res image explicitly
+        imageUrl = `https://tse1.mm.bing.net/th?q=${bingQuery}&w=1200`;
+        
         if (imageUrl) {
           imageCache.set(ck, imageUrl);
         }
@@ -184,7 +154,6 @@ export function useEduAI(apiKey) {
       setStatusMsg("Complete!");
       
       return { eduData, imageUrl };
-
     } catch (err) {
       setError(err.message);
       return { error: err.message };
@@ -192,6 +161,5 @@ export function useEduAI(apiKey) {
       setLoading(false);
     }
   };
-
   return { runQuery, loading, error, statusMsg, pipeState };
 }
